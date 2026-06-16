@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia de Growth | TuGruero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #FF6600;
+            --dark-bg: #0F1115;
+            --darker-bg: #07080A;
+            --text-light: #F4F4F5;
+            --text-muted: #A1A1AA;
+            --accent-glow: rgba(255, 102, 0, 0.2);
+            --node-dim: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .highlight {
+            color: var(--primary-orange);
+        }
+
+        /* Background animation */
+        .bg-animated {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 50%, var(--accent-glow), transparent 40%),
+                        radial-gradient(circle at 85% 30%, rgba(255,102,0,0.1), transparent 50%);
+            z-index: 0;
+            animation: pulseBg 10s infinite alternate;
+        }
+
+        @keyframes pulseBg {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Bifurcated Progress Bar (SVG) */
+        .progress-container {
+            position: fixed;
+            top: 15px; 
+            left: 0;
+            width: 100%; 
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .progress-svg {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .prog-path {
+            fill: none;
+            stroke: var(--node-dim);
+            stroke-width: 0.8;
+            stroke-linecap: round;
+            transition: stroke 0.4s ease;
+        }
+
+        .prog-path.active {
+            stroke: var(--primary-orange);
+            stroke-width: 1.2;
+            filter: drop-shadow(0 0 2px var(--primary-orange));
+        }
+
+        .prog-dot {
+            fill: var(--dark-bg);
+            stroke: var(--node-dim);
+            stroke-width: 1;
+            transition: all 0.4s ease;
+        }
+
+        .prog-dot.active {
+            fill: var(--primary-orange);
+            stroke: #fff;
+            stroke-width: 1;
+            filter: drop-shadow(0 0 3px var(--primary-orange));
+        }
+
+        /* Fullscreen Button */
+        #fullscreenBtn {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #fullscreenBtn:hover {
+            background: var(--primary-orange);
+            border-color: var(--primary-orange);
+        }
+
+        body.is-fullscreen #fullscreenBtn {
+            display: none;
+        }
+
+        /* Presentation Container */
+        .presentation {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10%;
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+            visibility: visible;
+        }
+
+        .slide.past {
+            opacity: 0;
+            transform: translateY(-40px) scale(0.95);
+        }
+
+        /* Typography & Components */
+        .slide h1 {
+            font-size: 4rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            font-weight: 800;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .slide h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .slide p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            max-width: 850px;
+        }
+
+        .slide .lead {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            border-left: 4px solid var(--primary-orange);
+            padding-left: 20px;
+            margin: 25px 0;
+            font-weight: 600;
+        }
+
+        /* Grid for cards */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,102,0,0.2);
+            padding: 25px;
+            border-radius: 12px;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.06);
+            border-color: var(--primary-orange);
+        }
+
+        .card h3 {
+            color: var(--primary-orange);
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+        }
+
+        /* Timeline styles */
+        .timeline {
+            margin-top: 20px;
+            border-left: 3px solid rgba(255,102,0,0.3);
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary-orange);
+            box-shadow: 0 0 10px var(--primary-orange);
+        }
+
+        .timeline-item h3 {
+            color: var(--text-light);
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-item span {
+            color: var(--primary-orange);
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .michelin-note {
+            display: block;
+            margin-top: 8px;
+            padding: 10px 15px;
+            background: rgba(255, 102, 0, 0.05);
+            border-left: 2px solid var(--primary-orange);
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .btn-control {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-control:hover {
+            background: var(--primary-orange);
+            transform: scale(1.1);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 45px;
+            left: 40px;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            z-index: 100;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide h1 { font-size: 2.5rem; }
+            .slide h2 { font-size: 1.8rem; }
+            .slide p, .slide .lead { font-size: 1.1rem; }
+            .slide { padding: 8%; justify-content: center; }
+            .grid-2 { grid-template-columns: 1fr; gap: 20px; }
+            .timeline-item { margin-bottom: 25px; }
+            .controls { bottom: 20px; right: 20px; }
+            .slide-counter { bottom: 35px; left: 20px; }
+            .progress-container { padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animated"></div>
+
+    <!-- Botón Fullscreen -->
+    <button id="fullscreenBtn" title="Pantalla Completa">⛶</button>
+    
+    <!-- Bifurcated Progress Bar (SVG Roadmap) -->
+    <div class="progress-container">
+        <svg class="progress-svg" viewBox="0 0 100 20" preserveAspectRatio="none">
+            <path class="prog-path" data-active-on="1" d="M 10 10 L 22 10" />
+            <path class="prog-path" data-active-on="2" d="M 22 10 L 34 10" />
+            <path class="prog-path" data-active-on="3" d="M 34 10 L 46 10" />
+            <path class="prog-path" data-active-on="4" d="M 46 10 L 58 4" />
+            <path class="prog-path" data-active-on="6" d="M 58 4 L 70 10" />
+            <path class="prog-path" data-active-on="5" d="M 46 10 L 58 16" />
+            <path class="prog-path" data-active-on="6" d="M 58 16 L 70 10" />
+            <path class="prog-path" data-active-on="7" d="M 70 10 L 82 10" />
+            
+            <circle class="prog-dot" id="dot-0" cx="10" cy="10" r="1.5" />
+            <circle class="prog-dot" id="dot-1" cx="22" cy="10" r="1.5" />
+            <circle class="prog-dot" id="dot-2" cx="34" cy="10" r="1.5" />
+            <circle class="prog-dot" id="dot-3" cx="46" cy="10" r="1.5" />
+            <circle class="prog-dot" id="dot-4" cx="58" cy="4"  r="1.5" />
+            <circle class="prog-dot" id="dot-5" cx="58" cy="16" r="1.5" />
+            <circle class="prog-dot" id="dot-6" cx="70" cy="10" r="1.5" />
+            <circle class="prog-dot" id="dot-7" cx="82" cy="10" r="1.5" />
+        </svg>
+    </div>
+
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 0: Portada -->
+        <div class="slide active">
+            <h2>Propuesta Estratégica de Growth</h2>
+            <h1>De Asistencia Vial al <br><span class="highlight">Club de Movilidad de Venezuela</span></h1>
+            <p>Construyendo la infraestructura para escalar la tranquilidad.</p>
+        </div>
+
+        <!-- Slide 1: El Centro del Negocio -->
+        <div class="slide">
+            <h2>El Centro del Negocio</h2>
+            <p class="lead">"Maneja tranquilo. Nosotros resolvemos todos tus problemas."</p>
+            <p>Estudiando la plataforma y el ecosistema de servicios que ya han logrado integrar, percibo que el verdadero producto de la empresa ya no es la asistencia vial, sino la <strong>Tranquilidad</strong>.</p>
+            <p>Sobre esta base sólida, podemos desarrollar una vía donde la membresía sea percibida como la entrada exclusiva a un club que mantiene el vehículo en óptimas condiciones y permite recorrer el país sin estrés.</p>
+        </div>
+
+        <!-- Slide 2: El Reto y Métrica Estrella -->
+        <div class="slide">
+            <h2>El Reto y la Métrica Estrella</h2>
+            <p>Basado en el histórico, estimo que rondamos los <span class="highlight">40.000 afiliados</span>. El techo de mercado es inmenso.</p>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <h3>El Reto del Growth</h3>
+                    <p>Pasar de que el usuario vea la renovación como un <em>"desembolso anual de $50 (por si acaso)"</em>, a que lo perciba como un <strong>hábito mensual</strong> que le genera retornos tangibles.</p>
+                </div>
+                <div class="card">
+                    <h3>North Star Metric</h3>
+                    <p>Toda estrategia y esfuerzo operativo debe apuntar a mover y maximizar un solo número: <br><strong style="font-size: 1.5rem; color: #fff;">Cantidad de Afiliados Recurrentes</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Vías de Crecimiento -->
+        <div class="slide">
+            <h2>¿Cómo crecemos este número?</h2>
+            <p class="lead">Se plantean dos vías estratégicas paralelas para asegurar la retención y la captación masiva:</p>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Vía 1: Ecosistema (El Club)</h3>
+                    <p>Escalabilidad paso a paso de los beneficios de la membresía. Desde el vehículo hasta el estilo de vida del afiliado.</p>
+                </div>
+                <div class="card">
+                    <h3>Vía 2: Infraestructura (Hubs)</h3>
+                    <p>Comercializar la "Tranquilidad en Carretera" mediante el desarrollo de un mega proyecto logístico interurbano.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Vía 1 - Timeline de Beneficios (Actualizado) -->
+        <div class="slide">
+            <h2>Vía 1: Escalabilidad (El Club)</h2>
+            <p class="lead">A mayor masa de afiliados, mayor fuerza para negociar el ecosistema de beneficios.</p>
+            <div class="timeline" style="margin-top: 10px;">
+                <div class="timeline-item">
+                    <span>Etapa Inicial (~40k afiliados)</span>
+                    <h3>El Vehículo (El Núcleo)</h3>
+                    <p>Resolvemos el dolor inmediato. Alianzas de alta frecuencia con autolavados premium, redes de lubricentros, caucheras y baterías (ej. Duncan). Le demostramos al cliente que la membresía "se paga sola".</p>
+                </div>
+                <div class="timeline-item">
+                    <span>Etapa de Tracción (~100k afiliados)</span>
+                    <h3>La Carretera y el Viaje (La Expansión)</h3>
+                    <p>Expandimos la visión de movilidad con hoteles, posadas y paradores interurbanos.</p>
+                    <span class="michelin-note">
+                        <strong>*Estrategia Michelin:</strong> Crear la <em>"Guía TuGruero"</em> de recomendaciones en rutas. Si fomentamos que el venezolano viaje más, aumentamos la dependencia y el valor de nuestra membresía.
+                    </span>
+                </div>
+                <div class="timeline-item">
+                    <span>Etapa de Consolidación (250k+ afiliados)</span>
+                    <h3>Estilo de Vida y Finanzas (El Foso Defensivo)</h3>
+                    <p>Trascendemos el mundo automotriz para ser indispensables en su billetera. Créditos pre-aprobados para el sector automotriz (ej. Cashea), descuentos en cines, aerolíneas y supermercados.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Vía 2 - Corredores Seguros -->
+        <div class="slide">
+            <h2>Vía 2: Comercializar la Tranquilidad</h2>
+            <p class="lead">Devolverle al venezolano la confianza para viajar por carretera.</p>
+            <p><strong>El Sueño:</strong> Hubs Logísticos Nacionales.</p>
+            <p>La estrategia es empezar con un primer piloto en la <span class="highlight">Autopista Regional del Centro (ARC)</span>. Este corredor servirá de laboratorio para medir tiempos de respuesta, costos operativos y documentar estándares.</p>
+            <p>Validamos con este centro y luego podemos expandir a nivel nacional vía <strong>franquicias territoriales o modelos similares</strong>, monopolizando la seguridad vial en el país.</p>
+        </div>
+
+        <!-- Slide 6: Validación Internacional -->
+        <div class="slide">
+            <h2>El Horizonte: Validación Internacional</h2>
+            <p class="lead">Hacia allá van los grandes del mundo, y nosotros tenemos la pista libre aquí.</p>
+            <p>Modelos globales como la <span class="highlight">AAA (EE.UU.)</span> o el <span class="highlight">ADAC (Alemania)</span> no se mercadean como empresas de grúas, sino como <strong>Clubes de Automovilistas</strong> que resuelven integralmente la vida del usuario.</p>
+            <p>La base que han construido en estos 10 años tiene exactamente el mismo ADN. Solo necesitamos la tracción de datos y la orquestación comercial para llegar a ese nivel.</p>
+        </div>
+
+        <!-- Slide 7: El Rol y Cierre -->
+        <div class="slide">
+            <h2>El Motor: Inteligencia y Ejecución</h2>
+            <p class="lead">Impulsar el crecimiento escalable y sostenible del negocio.</p>
+            <p>Mi enfoque será actuar como un puente entre el <strong>marketing, el desarrollo de producto y el análisis de datos</strong>; buscando aumentar los ingresos y optimizar el ciclo de vida del cliente.</p>
+            <p>Pondremos toda la arquitectura analítica al servicio de una sola visión:</p>
+            <h3 style="font-size: 2rem; color: #fff; margin-top: 20px;">Ser los dueños de la <span class="highlight">tranquilidad en la movilidad</span> en Venezuela.</h3>
+        </div>
+
+    </div>
+
+    <!-- Controls -->
+    <div class="slide-counter" id="counter">1 / 8</div>
+    <div class="controls">
+        <button class="btn-control" id="prevBtn" title="Anterior">&#8592;</button>
+        <button class="btn-control" id="nextBtn" title="Siguiente">&#8594;</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const counter = document.getElementById('counter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const fsBtn = document.getElementById('fullscreenBtn');
+        let currentSlide = 0;
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'past');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('past');
+                }
+            });
+
+            updateProgressBar(currentSlide);
+            counter.innerText = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function updateProgressBar(index) {
+            const dots = document.querySelectorAll('.prog-dot');
+            dots.forEach((dot, i) => {
+                if (i <= index) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+
+            if (index >= 5) {
+                document.getElementById('dot-4').classList.add('active');
+                document.getElementById('dot-5').classList.add('active');
+            } else if (index === 4) {
+                document.getElementById('dot-4').classList.add('active');
+                document.getElementById('dot-5').classList.remove('active');
+            }
+
+            const paths = document.querySelectorAll('.prog-path');
+            paths.forEach(path => {
+                const activeOn = parseInt(path.getAttribute('data-active-on'));
+                if (index >= activeOn) {
+                    path.classList.add('active');
+                } else {
+                    path.classList.remove('active');
+                }
+            });
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+            }
+        }
+
+        fsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error al intentar modo pantalla completa: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                document.body.classList.add('is-fullscreen');
+            } else {
+                document.body.classList.remove('is-fullscreen');
+            }
+        });
+
+        nextBtn.addEventListener('click', (e) => { e.stopPropagation(); nextSlide(); });
+        prevBtn.addEventListener('click', (e) => { e.stopPropagation(); prevSlide(); });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        document.getElementById('presentation').addEventListener('click', () => {
+            nextSlide();
+        });
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) nextSlide(); 
+            if (touchEndX > touchStartX + threshold) prevSlide(); 
+        }
+
+        updateSlides();
+    </script>
+</body>
+</html>
